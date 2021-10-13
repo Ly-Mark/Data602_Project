@@ -1,0 +1,54 @@
+---
+title: "Team_7"
+author: "Mark Ly"
+date: "12/10/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# **TITLE** 
+
+<br/>
+
+## **Purpose and Motivation for the project**
+<br/>
+
+
+
+
+## **Data Collection**
+<br/><br/>
+
+### **Datasets** 
+
+
+```{r}
+library(SASxport)
+library(dplyr)
+library(visdat)
+
+# reading the SAS transport file from the NHANES website, combining both data sets from the 2015-2016 survey and the 2017-2018 survey. 
+bmi15to16 <-read.xport("D:/UofC2021/DATA602/Project/BMX_I.xpt")
+demo15to16 <-read.xport("D:/UofC2021/DATA602/Project/DEMO_I.xpt")
+bmi17to18 <-read.xport("D:/UofC2021/DATA602/Project/BMX_J.xpt")
+demo17to18 <-read.xport("D:/UofC2021/DATA602/Project/DEMO_J.xpt")
+
+bmi15to16 <- dplyr::select(bmi15to16,"SEQN","BMDSTATS",'BMXWT','BMXHT','BMXBMI','BMXLEG','BMXARML','BMXARMC','BMXWAIST')
+bmi17to18 <- dplyr::select(bmi17to18,"SEQN","BMDSTATS",'BMXWT','BMXHT','BMXBMI','BMXLEG','BMXARML','BMXARMC','BMXWAIST')
+
+demo15to16 <- dplyr::select(demo15to16,"SEQN",'RIAGENDR','RIDRETH1','RIDAGEYR','DMDCITZN','DMDHHSIZ')
+demo17to18 <- dplyr::select(demo17to18,"SEQN",'RIAGENDR','RIDRETH1','RIDAGEYR','DMDCITZN','DMDHHSIZ')
+
+nhanes15to16 <- demo15to16 %>% left_join(bmi15to16, by="SEQN")
+nhanes17to18 <- demo17to18 %>% left_join(bmi17to18, by="SEQN")
+
+nhanesBMI <-bind_rows(nhanes15to16,nhanes17to18)
+
+#missing data after merging 15-16
+vis_miss(nhanesBMI)
+
+head(nhanesBMI)
+```
