@@ -23,12 +23,24 @@ knitr::opts_chunk$set(echo = TRUE)
 <br/><br/>
 
 ### **Datasets** 
-
+The data for this project was obtained from the National Health and Nutrition Examination Survey (NHANES) for years 2015-2016 and 2017-2018. The NHANES survey combines both interviews and physical examinations in order to health status of both adults and children in the United States. What we are interested in is the BMI examination data 
 
 ```{r}
 library(SASxport)
 library(dplyr)
 library(visdat)
+
+# Sort Gender function 
+sortGen <- function(dataset,val){
+    gen <- dataset %>% filter(RIAGENDR == val)
+}
+
+# Sort Gender function 
+sortEth <- function(dataset,val){
+    eth <- dataset %>% filter(RIDRETH3 == val)
+}
+
+
 
 # reading the SAS transport file from the NHANES website, combining both data sets from the 2015-2016 survey and the 2017-2018 survey. 
 bmi15to16 <-read.xport("D:/UofC2021/DATA602/Project/BMX_I.xpt")
@@ -39,16 +51,61 @@ demo17to18 <-read.xport("D:/UofC2021/DATA602/Project/DEMO_J.xpt")
 bmi15to16 <- dplyr::select(bmi15to16,"SEQN","BMDSTATS",'BMXWT','BMXHT','BMXBMI','BMXLEG','BMXARML','BMXARMC','BMXWAIST')
 bmi17to18 <- dplyr::select(bmi17to18,"SEQN","BMDSTATS",'BMXWT','BMXHT','BMXBMI','BMXLEG','BMXARML','BMXARMC','BMXWAIST')
 
-demo15to16 <- dplyr::select(demo15to16,"SEQN",'RIAGENDR','RIDRETH1','RIDAGEYR','DMDCITZN','DMDHHSIZ')
-demo17to18 <- dplyr::select(demo17to18,"SEQN",'RIAGENDR','RIDRETH1','RIDAGEYR','DMDCITZN','DMDHHSIZ')
+demo15to16 <- dplyr::select(demo15to16,"SEQN",'RIAGENDR','RIDRETH3','RIDAGEYR','DMDCITZN','DMDHHSIZ')
+demo17to18 <- dplyr::select(demo17to18,"SEQN",'RIAGENDR','RIDRETH3','RIDAGEYR','DMDCITZN','DMDHHSIZ')
 
 nhanes15to16 <- demo15to16 %>% left_join(bmi15to16, by="SEQN")
 nhanes17to18 <- demo17to18 %>% left_join(bmi17to18, by="SEQN")
 
-nhanesBMI <-bind_rows(nhanes15to16,nhanes17to18)
+nhanesBMI <-bind_rows(nhanes15to16,nhanes17to18) # 19225 rows
 
 #missing data after merging 15-16
 vis_miss(nhanesBMI)
 
-head(nhanesBMI)
+# filtering for people >=20 and then complete data for BMI 
+sortBMI <- nhanesBMI %>% filter(RIDAGEYR >= 20 & BMDSTATS ==1) # 9757 rows 
+
+vis_miss(sortBMI) # checking for missing after setting conditions
+
+sortBMI
+
+
+
+# Filtering for male and female
+maleBMI <- sortGen(sortBMI,1) # 4782 rows
+femaleBMI <- sortGen(sortBMI,2) # 4975 rows
+
+#20-39, 40-59, 60+
+
+# sorted by Ethnicity 
+ethMex <- sortAll(sortBMI,1) # 1488 rows Mexican
+ethHisp <- sortAll(sortBMI,2) # 1113 rows Hispanic
+ethNW <- sortAll(sortBMI,3) # 3299 rows Non Hispanic White
+ethNB <- sortAll(sortBMI,4) # 2158 rows Non Hispanic Black
+ethNA <- sortAll(sortBMI,6) # 1286 rows Non Hispanic Asian
+ethMW <- sortAll(sortBMI,7) # 413 rows Non Hispanic Multi-Racial
+
+# adding age ranges that we want to study 20-39 40-59 60+
+maleAgeBMI <- maleBMI %>%
+    mutate(ageRange = case_when(
+        RIDAGEYR >= 20 & RIDAGEYR <=39~"20-39",
+        RIDAGEYR >= 40 & RIDAGEYR <=59~"40-59",
+        RIDAGEYR >= 60 ~"60+")
+        )
+
+femaleAgeBMI <- femaleBMI %>%
+    mutate(ageRange = case_when(
+        RIDAGEYR >= 20 & RIDAGEYR <=39~"20-39",
+        RIDAGEYR >= 40 & RIDAGEYR <=59~"40-59",
+        RIDAGEYR >= 60 ~"60+")
+        )
+
+
+
+
+# mean BMI for male and female 
+mean(maleBMI$BMXBMI) # 29.04044
+mean(femaleBMI$BMXBMI) # 29.8699
+
+
 ```
