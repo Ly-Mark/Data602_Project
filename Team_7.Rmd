@@ -1,0 +1,348 @@
+---
+title: "Team_7"
+author: "Mark Ly"
+date: "12/10/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# **TITLE** 
+
+<br/>
+
+## **Purpose and Motivation for the project**
+<br/>
+
+
+
+
+## **Data Collection**
+<br/><br/>
+
+### **Datasets** 
+
+The data for this project was obtained from the National Health and Nutrition Examination Survey (NHANES) for years 2015-2016 and 2017-2018. The NHANES program surveys are done to determine the health of the nation by taking a national representative sample of about 5000 persons each year. This survey is an ongoing survey that shows the distribution of health issues within the U.S and allows health planners to see what health problems are affecting the population over time. However, NHANES does over sample a few groups, persons 60 and older, African Americans, and Hispanics. NHANES is a two part survey where there is a questionnaire part and an examination part. We will be making use of both parts for our project. We will be using 2 cycles, 2015 to 2016 and the 2017 to 2018 cycles. In the 2015 to 2016 cycle, we have about 15000 respondents from the ages of <1 year to 80+. 
+
+What we are interested in is the BMI examination data which gives us measurements, such as height(cm), weight(kg), and also calculated BMI ($kg/m^2$). There are other measurements within the BMI examination data that can be used for further analysis.
+We will also make use of the demographic data from the questionnaire, to get gender and age. For all NHANES data sets, we will be referring to the code book that is associated with each data set. Within the code book, it tells us how to decipher the data set, what type of values we are dealing with, what each value is coded to and the age range of all participants for that measure. 
+
+### **Data Wrangling**
+
+#### **Base Data set**
+To get the data into a usable format for analysis, we will need to perform multiple data wrangling steps as well as making subsets of our data in order to answer our motivational questions. 
+
+1. Import the SAS export files using *SASxport*
+
+2. Using *dplyr* commands (select) to select the variables we are interested in
+    + BMI Data (BMX_I, BMI_J)
+        + Sequence number, Body measurement completion status, Weight(kg), Height(cm), BMI ($kg/m^2$)
+        + Upper leg length(cm), Upper arm length(cm) ,Arm Circumference(cm), Waist Circumference (cm)
+    + Demographic Data (DEMO_I, DEMO_J)
+        + Sequence number, Gender, Ethnicity, Age
+        + Citizenship, Household Size
+        
+3. Join the BMI data with the Demographic data for each cycle using a left join 
+    + SEQN is unique identifier that we can use to join our data sets.
+    + We used the *left_join* function in *dplyr* to achieve this. 
+    
+4. Joining both the cycles together to form one large data set. 
+    + Since we are using the same number of columns in the same order, we can use *bind_rows* to concatenate the two data frames
+    
+5. Checking the join and missing values using the *visdat*
+    + 7.4% missing data
+    
+6. Filtering our data for those who are $\geq20$ and have a complete set of measurements in the BMI data set
+    + Using the dplyr filter command, we can perform a filter operation on the Age (RIDAGEYR) and BMI measurement status (BMDSTATS)
+    
+7. Checking for missing data again using *visdat*
+
+At this point we have a tidy base data base that can be use to create smaller subsets of data for analysis. We started with 19225 individuals over the 2 cycles and after filtering we have 9757 individuals to perform our analysis. At this point we have not renamed our columns because we still need to subset our data.
+
+
+```{r}
+
+library(SASxport)
+library(dplyr)
+library(visdat)
+
+# reading the SAS transport file from the NHANES website, combining both data sets from 
+# the 2015-2016 survey and the 2017-2018 survey. 
+bmi15to16 <-read.xport("BMX_I.xpt")
+demo15to16 <-read.xport("DEMO_I.xpt")
+bmi17to18 <-read.xport("BMX_J.xpt")
+demo17to18 <-read.xport("DEMO_J.xpt")
+
+# selecting variables from the BMI data set for both cycles
+bmi15to16 <- dplyr::select(bmi15to16,"SEQN","BMDSTATS",'BMXWT','BMXHT','BMXBMI','BMXLEG',
+                           'BMXARML','BMXARMC','BMXWAIST')
+bmi17to18 <- dplyr::select(bmi17to18,"SEQN","BMDSTATS",'BMXWT','BMXHT','BMXBMI','BMXLEG',
+                           'BMXARML','BMXARMC','BMXWAIST')
+
+# selecting variables from the Demographic data set for both cycles
+demo15to16 <- dplyr::select(demo15to16,"SEQN",'RIAGENDR','RIDRETH3','RIDAGEYR',
+                            'DMDCITZN','DMDHHSIZ')
+demo17to18 <- dplyr::select(demo17to18,"SEQN",'RIAGENDR','RIDRETH3','RIDAGEYR',
+                            'DMDCITZN','DMDHHSIZ')
+
+# merging both demographic and BMI data using the "SEQN" unique identifier 
+nhanes15to16 <- demo15to16 %>% left_join(bmi15to16, by="SEQN")
+nhanes17to18 <- demo17to18 %>% left_join(bmi17to18, by="SEQN")
+
+nhanesBMI <-bind_rows(nhanes15to16,nhanes17to18) # binding both cycles of data into one large data set (19225 rows)
+
+vis_miss(nhanesBMI) # missing data after merging data sets together
+
+# filtering for those who are >=20 and have filled out all the BMI measurements
+sortBMI <- nhanesBMI %>% filter(RIDAGEYR >= 20 & BMDSTATS ==1) #9757 rows 
+
+vis_miss(sortBMI) # checking for missing after setting conditions
+
+head(sortBMI) # displaying data set 
+```
+
+#### **Sorting by Ethnicity**
+
+One of our questions we are investigating is the proportions of overweight and obese individuals across different ethnic groups. We will need to sub set our main data set by ethnic groups that have been defined in the NHANES data set.
+
+1. Using the *dplyr* filter function and sorting ethnicity into 6 different groups. We created a function (*sortEth*) to do this more efficiently
+    + RIDRETH3 is the code for ethnicity in the NHANES demographic data set. It is coded 1-6 depending on the reported ethnicity.
+        + 1 = Mexican American (1488 individuals)
+        + 2 = Other Hispanic (1113 individuals)
+        + 3 = Non-Hispanic White (3299 individuals)
+        + 4 = Non-Hispanic Black (1286 individuals)
+        + 5 = Non-Hispanic Asian (1286 individuals)
+        + 6 = Other Race (Multi-Racial) (413 individuals)
+        
+2. Next, we have to create a new column to determine there weight status based on their BMI reading. To do this we will be using the *dplyr* command *case_when* and *mutate* to set our bins based on what their BMI number is. We created a function that utilizes this.
+    + $<18.5$ = Underweight
+    + $15.5$ to $24.9$ = Healthy
+    + $25$ to $29.9$ = Overweight
+    + $\geq30$ Obese
+
+3. We to get the count, mean and standard error for each of our BMI categories for each of our ethnicities. To accomplish this, we will create a function that takes advantage of *dplyr*'s forward pipe (*%>%*), *group_by*, and *summarize* commands
+    + We first need to select which data set we want to use
+    + Then we will use *group_by* command to group the individuals in our subset by the BMI categories that we set previously
+    + We will use the *summarize* to perform operations on our grouped data
+        + For count, we will use the *n()* to get the number of observations
+        + For mean, can simply use the mean on the BMI column (BMXBMI)
+        + For Standard error, we can just take the standard deviation of the BMI column and divide that with the number of observations
+
+At this moment, we have all the tools to investigate our motivational question regarding BMI and the different ethnic backgrounds in the United States.
+
+```{r}
+# Sort ethnicity sorting function. 
+sortEth <- function(dataset,val){
+    eth <- dataset %>% filter(RIDRETH3 == val)
+}
+
+# BMI status 
+bmiSort <- function(datSet){
+    bmiRa <- datSet%>%
+        mutate(bmiRange = case_when(
+            BMXBMI <18.5 ~ "Underweight",
+            BMXBMI >=18 & BMXBMI <=24.9 ~ "Healthy",
+            BMXBMI >=25 & BMXBMI <=29.9 ~ "Overweight",
+            BMXBMI >=30 ~"Obese")
+            )
+}
+
+
+# function to return count, mean and standard error for each BMI status
+bmiStat <- function(datSet){
+    datSet %>%
+        group_by(bmiRange)%>%
+        summarize(
+            bmiCount = n(),
+            bmiMean = mean(BMXBMI),
+            bmiSE = sd(BMXBMI)/sqrt(n())
+            )
+}
+
+# sorted by Ethnicity 
+ethMex <- sortEth(sortBMI,1) # 1488 rows Mexican
+ethHisp <- sortEth(sortBMI,2) # 1113 rows Hispanic
+ethNW <- sortEth(sortBMI,3) # 3299 rows Non Hispanic White
+ethNB <- sortEth(sortBMI,4) # 2158 rows Non Hispanic Black
+ethNA <- sortEth(sortBMI,6) # 1286 rows Non Hispanic Asian
+ethMW <- sortEth(sortBMI,7) # 413 rows Non Hispanic Multi-Racial
+
+# adding BMI status to each ethnicity 
+ethMex <- bmiSort(ethMex)
+ethHisp <- bmiSort(ethHisp)
+ethNW <- bmiSort(ethNW)
+ethNB <- bmiSort(ethNB)
+ethNA <- bmiSort(ethNA)
+ethMW <- bmiSort(ethMW)
+
+head(ethMex)
+
+# getting count, mean and SE for each category of BMI for each ethnicity
+mexStat <- bmiStat(ethMex)
+hispStat <- bmiStat(ethHisp)
+nwStat <- bmiStat(ethNW)
+nbStat <- bmiStat(ethNB)
+naStat <- bmiStat(ethNA)
+mwStat <- bmiStat(ethMW)
+
+mexStat
+```
+
+#### **Sorting by Gender**
+
+The other motivational question we are looking to answer wants to examine the differences between males and females. We will need to create another sub set of our main data base in order to do so. 
+
+1. First we need to sub set our data based on gender using the *filter* function in *dplyr*. From the demographic code book, gender is labeled as RIAGENDR
+    + Male is coded as 1 
+    + Female is coded as 2
+    
+2. Next we want to create bins for different age ranges and calculate to calculate the BMI for each age range. To do this we can use the *case_when* and *mutate* function from *dplyr* to group by age and store it in a new column.
+    + 20 to 39
+    + 40 to 59
+    + 60+
+
+3. We can borrow the same function in the BMI data set to find the number, count, mean and standard error for males and females. For the total's we can calculate that manually for both genders using the *summarize* function.
+
+```{r}
+# Sort Gender function 
+sortGen <- function(dataset,val){
+    gen <- dataset %>% filter(RIAGENDR == val)
+}
+
+# function to return count, mean and standard error for each BMI status
+genStat <- function(datSet){
+    datSet %>%
+        group_by(ageRange)%>%
+        summarize(
+            bmiCount = n(),
+            bmiMean = mean(BMXBMI),
+            bmiSE = sd(BMXBMI)/sqrt(n())
+            )
+}
+
+# Filtering for male and female
+maleBMI <- sortGen(sortBMI,1) # 4782 rows
+femaleBMI <- sortGen(sortBMI,2) # 4975 rows
+
+# adding age ranges that we want to study 20-39 40-59 60+
+maleAgeBMI <- maleBMI %>%
+    mutate(ageRange = case_when(
+        RIDAGEYR >= 20 & RIDAGEYR <=39~"20-39",
+        RIDAGEYR >= 40 & RIDAGEYR <=59~"40-59",
+        RIDAGEYR >= 60 ~"60+")
+        )
+
+femaleAgeBMI <- femaleBMI %>%
+    mutate(ageRange = case_when(
+        RIDAGEYR >= 20 & RIDAGEYR <=39~ "20-39",
+        RIDAGEYR >= 40 & RIDAGEYR <=59~ "40-59",
+        RIDAGEYR >= 60 ~"60+")
+        )
+
+head(maleAgeBMI)
+
+# getting count, mean and SE for each category of BMI for each gender based on age range
+maleStat <-genStat(maleAgeBMI) 
+femaleStat <-genStat(femaleAgeBMI)
+
+# getting count, mean and SE for each category of BMI for each gender
+maleStatTotal <- maleAgeBMI %>% summarize(
+    count = n(),
+    mean = mean(BMXBMI),
+    se = sd(BMXBMI)/sqrt(n())
+)
+
+femaleStatTotal <- femaleAgeBMI %>% summarize(
+    count = n(),
+    mean = mean(BMXBMI),
+    se = sd(BMXBMI)/sqrt(n())
+)
+
+maleStat
+```
+Now that we have gathered all our data and calculated the relevant statistics, we can begin our analysis of BMI 
+
+
+## **Statistical Analysis**
+
+### **Hypothesis test**
+
+```{r}
+#Hypothesis Test
+# We will be conducting this test at .05 level of significance.
+Ho <- "MuMaleBmi = MuFemaleBMI"
+Ha <- "MuMaleBmi != MuFemaleBMI"
+
+##First we Isolate the data into the desired age-ranges 
+male2039 <- maleAgeBMI[maleAgeBMI$RIDAGEYR<=39,]
+Female2039 <- femaleAgeBMI[femaleAgeBMI$RIDAGEYR<=39,]
+
+male4059 <- maleAgeBMI[c(maleAgeBMI$RIDAGEYR>=40 &maleAgeBMI$RIDAGEY<=59),]
+Female4059 <- femaleAgeBMI[c(femaleAgeBMI$RIDAGEYR>=40 & femaleAgeBMI$RIDAGEYR<=59 ),]
+
+male6080 <- maleAgeBMI[c(maleAgeBMI$RIDAGEYR>=60 & maleAgeBMI$RIDAGEYR<=81),]
+Female6080 <- femaleAgeBMI[c(femaleAgeBMI$RIDAGEYR>=60 & femaleAgeBMI$RIDAGEYR<=81),]
+
+#Then we conduct the hypothesis test for the desired age-ranges
+#First are males and females ages 20-39
+
+t.test(Female2039$BMXBMI,male2039$BMXBMI)
+Pvalue <- .09045
+CI <- c(-0.07108265,0.97233594)
+Conclusion <- "Since the Pvalue is greater than our level of significance we do not reject the null. This indicates that 
+males and females BMI means are equal for this age group."
+
+#Second test, Ages 40-59
+t.test(Female4059$BMXBMI,male4059$BMXBMI)
+pvalue <- '2.511e-05'
+CI <- c(0.5474608,1.4976780)
+Conclusion <- "Since the Pvalue is less than our level of significance we do reject the null. This indicates that 
+males and females BMI means are not equal for this age group."
+
+t.test(Female6080$BMXBMI,male6080$BMXBMI)
+
+maleStat
+femaleStat
+maleStatTotal
+femaleStatTotal
+
+
+
+```
+
+
+### **Test of homogeneity**
+
+
+Ethnicity                 | Underweight  | Healthy | Overweight | Obese |
+--------------------------|-------|------| --------|----------- |-------|
+Mexican American          | 0.1   | 0.0  |   -2    |     4      |  0.4  | 
+Other Hispanic            | 0.2   | 0.2  |   -1    |     1      |  0.2  | 
+Non-Hispanic White        | 0.4   | 0.8  |    0    |     0      |  0.2  | 
+Non-Hispanic Black        | 0.2   | 0.6  |    1    |     1      |  0.2  | 
+Non-Hispanic Asian        | 0.1   | 0.4  |    2    |     4      |  0.2  | 
+Other Race (Multi Racial) | 11    | 11   |    1    |     5      |  0.2  | 
+
+
+
+```{r}
+mexStat
+hispStat
+nwStat
+nbStat
+naStat
+mwStat
+```
+
+## **Conclusion**
+
+
+
+
+## **References**
+
+
+
+
