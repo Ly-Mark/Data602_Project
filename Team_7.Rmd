@@ -278,7 +278,81 @@ femaleStat
 maleStatTotal
 femaleStatTotal
 ```
+#We will start by doing a Hypothesis Test on whether there is any stastically significant difference in the BMI's of Male's and Females across all age groups over 20. 
 
+
+
+```{r}
+SampleMeanMales=maleStatTotal$mean  
+SampleMeanFemales=femaleStatTotal$mean
+print(SampleMeanMales) #display total Sample mean BMI of males
+print(SampleMeanFemales) #display total Sample mean BMI of females
+diff.BMIs=SampleMeanMales-SampleMeanFemales
+print(diff.BMIs) #display the difference
+```
+
+#we can see the sample mean BMI of male across all age groups is 29.0404, whereas the sample mean BMI of Female across all age groups is 29.8699. From this, we can see that MaleBMi is  less than Female BMi by 0.8295. To check whether the difference is significant or not we do a two sided test at alpha=0.05.
+
+$H_o : \mu = 0$
+$H_a : \mu \neq 0$
+
+#Null hypothesis states that there is no difference between population MeanBMI's of Males and Females.
+#Alternative hypothesis states there is a difference between population MeanBMI's of Males and Females.
+
+#Conditions for Hypothesis Test: Difference Between Means
+#Meets the Independence condition as the two samples of Male and Female are independent of each other. They are less than 10% of their respective gender population.
+#Both the samples are randomly collected.
+#Population distributions of BMI for each gender are right skewed. To nullify this higher sample sizes are taken.
+
+```{r}
+Maleage.BMIsample=maleageBMI %>% select(BMXBMI) #selecting BMI's of males 
+Femaleage.BMIsample=femaleAgeBMI  %>% select(BMXBMI) #selecting BMi's of females
+t.test(x=Maleage.BMIsample, y=Femaleage.BMIsample,alternative = "two.sided")
+```
+
+#From the test results we can see that with a low p-value of 1.979e-09, which is way less than alpha at 0.05, we can strongly reject the null hypothesis in favor of alternate hypothesis which states that there is a difference between population MeanBMI's of Males and Females. We are 95 percent confident the range of population mean BMI of Males is lower than Females by (0.5587, 1.1003).
+
+#To check whether Male BMI is lower than Female BMI consistently across all age groups or a particular age group is influencing this result and to find out how difference in BMI is varying with increase in age. We will start looking into each age group from here on
+
+
+#Age-group 60+
+
+```{r}
+SampleMeanMales=maleStat[3,3]
+SampleMeanFemales=femaleStat[3,3]
+print(SampleMeanMales)#display Sample mean BMI of males over 60
+print(SampleMeanFemales)#display Sample mean BMI of female over 60
+diff.BMIs60=SampleMeanMales-SampleMeanFemales
+print(diff.BMIs60)#display their difference
+```
+#we can see the sample mean BMI of male for ages over 60 is 28.7643, whereas the sample mean BMI of Female for ages over 60 is  29.7068 From this, we can see that MaleBMi is  less than Female BMi by 0.9424. To check whether the difference is significant or not we do a two sided test at alpha=0.05.
+
+$H_o : \mu = 0$
+$H_a : \mu \neq 0$
+
+#Null hypothesis states that there is no difference between population MeanBMI's of Males and Females for ages over 60.
+#Alternative hypothesis states there is a difference between population MeanBMI's of Males and Females for ages over 60.
+
+#Conditions for Hypothesis Test: Difference Between Means
+#Meets the Independence condition as the two samples of Male and Female for this particular age groupnare independent of each other. They are less than 10% of their respective gender population.
+#Both the samples are randomly collected.
+#Population distributions of BMI  for each gender for this particular age group might be slightly right skewed . To nullify this higher sample sizes are taken.
+
+```{r}
+Maleage.BMIsample=maleageBMI %>% filter(ageRange=="60+") %>% select(BMXBMI) #selecting BMI's of Males over 60
+Femaleage.BMIsample=femaleAgeBMI %>% filter(ageRange=="60+") %>% select(BMXBMI) #selecting BMI's of Females over 60
+t.test(x=Maleage.BMIsample, y=Femaleage.BMIsample,alternative = "two.sided")
+
+```
+#From the test results we can see that with a low p-value of 5.205e-06, which is way less than alpha at 0.05, we can strongly reject the null hypothesis in favor of alternate hypothesis which states that there is a difference between population MeanBMI's of Males and Females for senior citizens. For ages over 60, We are 95 percent confident that the range of population mean BMI of Males is lower than Females by (0.5375, 1.3473).
+
+
+
+#Conclusion
+#From our four Hypothesis tests we can see that female BMI is higher than Male BMI across all age groups above 20+.
+#As our sample sizes are roughly costant around 1600 for each age group the highest difference is observed in the ------ group.
+#These results can be useful in the field of drug discovery where drugs are discovered for a disease which effects both men and women.
+#Dieticians can use these results to specifically design diets on the basis of gender and their age group.
 
 ### **Test of homogeneity**
 
