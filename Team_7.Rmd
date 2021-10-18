@@ -1,7 +1,7 @@
 ---
 title: "Team_7"
 author: "Mark Ly"
-date: "12/10/2021"
+date: "20/10/2021"
 output: pdf_document
 ---
 
@@ -15,14 +15,17 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## **Purpose and Motivation for the project**
 <br/>
+In this report we will investigate the weight status as measured by the body mass index (BMI) for different populations within the United States of America (USA). Specifically, we would like to examine the proportions of overweight and obese individuals across different ethnic, gender, and age groups. The motivation behind this is to understand if being overweight or obese is linked to the ethnic background, gender, or age of an individual. This would allow programs that attempt to address these health concerns to better target groups most adversely impacted by overweight and obesity. In order to examine these issues, we will be utilizing data gathered from the National Health and Nutrition Examination Survey (NHANES) which is a program under the National Center for Health Statistics (part of the Centers for Disease Control and Prevention or CDC). Further discussion of the underlying data and wrangling procedure is provided in the Data Sets section.
 
+The number of individuals impacted by overweight and obesity is a continued cause for concern as it directly impacts the quality of life and ultimately leads to other health conditions which come with great cost in terms of both individual health and healthcare expenditure. A better understanding of the individuals who are impacted the most by overweight and obesity may assist in appropriate programs to combat these problems with the ultimate goal of improving individual health and reducing the burden on the healthcare system.
 
+In order to evaluate these issues, we will employ different statistical inference methods. A hypothesis test will be conducted comparing the mean BMI of males and females for individuals of different age groups. This will identify if there is an appreciable difference in the average BMI of males and females of the different age ranges; conducting these tests for different age groups reflects that fact that BMI does vary with age. In order to examine whether there is a difference in the proportion of individuals in the different BMI categories across ethnicity, we will utilize a chi-squared test of homogeneity. In conducting these statistical inference procedures, we would ultimately like to understand how BMI varies in different groups across the USA and reflect on potential opportunities for more detailed study. 
 
 
 ## **Data Collection**
 <br/><br/>
 
-### **Datasets** 
+### **Data Sets** 
 
 The data for this project was obtained from the National Health and Nutrition Examination Survey (NHANES) for years 2015-2016 and 2017-2018. The NHANES program surveys are done to determine the health of the nation by taking a national representative sample of about 5000 persons each year. This survey is an ongoing survey that shows the distribution of health issues within the U.S and allows health planners to see what health problems are affecting the population over time. However, NHANES does over sample a few groups, persons 60 and older, African Americans, and Hispanics. NHANES is a two part survey where there is a questionnaire part and an examination part. We will be making use of both parts for our project. We will be using 2 cycles, 2015 to 2016 and the 2017 to 2018 cycles. In the 2015 to 2016 cycle, we have about 15000 respondents from the ages of <1 year to 80+. 
 
@@ -70,10 +73,10 @@ library(visdat)
 
 # reading the SAS transport file from the NHANES website, combining both data sets from 
 # the 2015-2016 survey and the 2017-2018 survey. 
-bmi15to16 <-read.xport("D:/UofC2021/DATA602/Project/BMX_I.xpt")
-demo15to16 <-read.xport("D:/UofC2021/DATA602/Project/DEMO_I.xpt")
-bmi17to18 <-read.xport("D:/UofC2021/DATA602/Project/BMX_J.xpt")
-demo17to18 <-read.xport("D:/UofC2021/DATA602/Project/DEMO_J.xpt")
+bmi15to16 <-read.xport("BMX_I.xpt")
+demo15to16 <-read.xport("DEMO_I.xpt")
+bmi17to18 <-read.xport("BMX_J.xpt")
+demo17to18 <-read.xport("DEMO_J.xpt")
 
 # selecting variables from the BMI data set for both cycles
 bmi15to16 <- dplyr::select(bmi15to16,"SEQN","BMDSTATS",'BMXWT','BMXHT','BMXBMI','BMXLEG',
@@ -112,23 +115,23 @@ One of our questions we are investigating is the proportions of overweight and o
         + 1 = Mexican American (1488 individuals)
         + 2 = Other Hispanic (1113 individuals)
         + 3 = Non-Hispanic White (3299 individuals)
-        + 4 = Non-Hispanic Black (1286 individuals)
+        + 4 = Non-Hispanic Black (2158 individuals)
         + 5 = Non-Hispanic Asian (1286 individuals)
         + 6 = Other Race (Multi-Racial) (413 individuals)
         
-2. Next, we have to create a new column to determine there weight status based on their BMI reading. To do this we will be using the *dplyr* command *case_when* and *mutate* to set our bins based on what their BMI number is. We created a function that utilizes this.
+2. Next, we have to create a new column to determine their weight status based on their BMI reading. To do this we will be using the *dplyr* command *case_when* and *mutate* to set our bins based on what their BMI number is. We created a function that utilizes this.
     + $<18.5$ = Underweight
-    + $15.5$ to $24.9$ = Healthy
+    + $18.5$ to $24.9$ = Healthy
     + $25$ to $29.9$ = Overweight
-    + $\geq30$ Obese
+    + $\geq30$ = Obese
 
-3. We to get the count, mean and standard error for each of our BMI categories for each of our ethnicities. To accomplish this, we will create a function that takes advantage of *dplyr*'s forward pipe (*%>%*), *group_by*, and *summarize* commands
+3. We need to get the count, mean and standard error for each of our BMI categories for each of our ethnicities. To accomplish this, we will create a function that takes advantage of *dplyr*'s forward pipe (*%>%*), *group_by*, and *summarize* commands
     + We first need to select which data set we want to use
     + Then we will use *group_by* command to group the individuals in our subset by the BMI categories that we set previously
     + We will use the *summarize* to perform operations on our grouped data
         + For count, we will use the *n()* to get the number of observations
         + For mean, can simply use the mean on the BMI column (BMXBMI)
-        + For Standard error, we can just take the standard deviation of the BMI column and divide that with the number of observations
+        + For Standard error, we can just take the standard deviation of the BMI column and divide that with the square root of the number of observations
 
 At this moment, we have all the tools to investigate our motivational question regarding BMI and the different ethnic backgrounds in the United States.
 
@@ -198,7 +201,7 @@ The other motivational question we are looking to answer wants to examine the di
     + Male is coded as 1 
     + Female is coded as 2
     
-2. Next we want to create bins for different age ranges and calculate to calculate the BMI for each age range. To do this we can use the *case_when* and *mutate* function from *dplyr* to group by age and store it in a new column.
+2. Next we want to create bins for different age ranges and calculate the BMI for each age range. To do this we can use the *case_when* and *mutate* function from *dplyr* to group by age and store it in a new column.
     + 20 to 39
     + 40 to 59
     + 60+
@@ -278,6 +281,83 @@ femaleStatTotal
 
 
 ### **Test of homogeneity**
+
+In order to examine whether the proportion of individuals in each BMI category are consistent across different ethnic backgrounds, we will conduct a test of homogeneity using a chi-squared test. The populations under analysis are the representative groups from which the sample participants were selected; individuals of Mexican American, other Hispanic, Non-Hispanic White, Non-Hispanic Black, Non-Hispanic Asian, and other(multi-racial) ethnicity. 
+
+BMI is categorized into the following categories: underweight, healthy, overweight, and obese. These categorizations are based on BMI values of less than 18.5, 18.5-24.9, 25-29.9 and 30 and over respectively. We hope to examine whether the proportion of individuals in each category are consistent across different ethnic groups, and if not, this may provide grounds for further research into what is driving these differences as well as targeting programs appropriately to assist those populations struggling with overweight and obesity.	
+
+```{r}
+#creating a data frame consisting of the individuals in each BMI category by ethnicity
+ethnicity_df = rbind(ethMex[,c(3,15)],ethHisp[,c(3,15)])
+ethnicity_df = rbind(ethnicity_df,ethNW[,c(3,15)])
+ethnicity_df = rbind(ethnicity_df,ethNB[,c(3,15)])
+ethnicity_df = rbind(ethnicity_df,ethNA[,c(3,15)])
+ethnicity_df = rbind(ethnicity_df,ethMW[,c(3,15)])
+
+#convertinf above data frame into table required to run the chi-squared test
+ethnicity_tbl = table(ethnicity_df$RIDRETH3,ethnicity_df$bmiRange)
+rownames(ethnicity_tbl) = c("Mexican American", "Other Hispanic", "Non-Hispanic White",
+                            "Non-Hispanic Black", "Non-Hispanic Asian", "Other Race (Multi Racial)")
+print(ethnicity_tbl)
+```
+
+
+The above table indicates the number of individuals who fall into each BMI category, grouped by ethnicity. This is the initial contingency table from which the chi-squared test of homogeneity will be conducted. As we are examining the samples in order to see whether there is a significant difference in the number of people in each BMI category across the six ethnic groups we will setup the null and alternative hypothesis as follows:
+
+$H_o:$ The proportion of individuals in each of the four BMI categories is the same across the six ethnic groups.
+
+$H_a:$ The proportion of individuals in each of the four BMI categories is not the same across the six ethnic groups.
+
+
+We have elected to use a 5% level of significance in conducting this test.
+
+```{r}
+#calculations to manually setup chi-square test are based on slide 8 and 9 of Dr. Chen's 
+#Week 4 - II lecture notes presented October 5, 2021
+expected = as.array(margin.table(ethnicity_tbl,1)) %*% t(as.array(margin.table(ethnicity_tbl,2)))/
+    margin.table(ethnicity_tbl)
+cellcontributions = (as.array(ethnicity_tbl)-expected)^2/expected
+chi_square = round(sum(cellcontributions),4)
+pval = round(1- pchisq(chi_square,4),4)
+cat("Chisquare =", chi_square, ", ","P-value =", pval, "\n")
+
+#using built-in chi-square function
+chisq.test(ethnicity_tbl)
+```
+
+
+The above results show both the manual calculation and using the built-in chisq.test() function yield a test statistic of `r chi_square` and p-value of `r pval`. Since the p-value is extremely small and far less than the 5% level of significance, we strongly reject the null hypothesis that proportion of individuals in each of the four BMI categories is the same across the six ethnic groups.
+
+In order to gain further insight into this result, we will examine the expected values based on the contingency table values along with the Pearson residuals ($\frac{observed-expected}{\sqrt{expected}}$).
+
+
+```{r}
+chisq.test(ethnicity_tbl)$expected
+```
+
+
+```{r}
+chisq.test(ethnicity_tbl)$residuals
+```
+
+
+The table above demonstrates that the largest residuals come from Non-Hispanic Asians in both the healthy and obese categories. As the value in the healthy weight category is large and positive this indicates that the Non-Hispanic Asian population has a greater proportion of individuals in the healthy category and the large negative under obesity indicates a lower proportion of their population falls in the obese category as compared with the expected values of the contingency table. The next largest residuals are from the Mexican American group, in this case it appears that a their population has a greater proportion of individuals in the obese category and a smaller proportion in the healthy category. In order to get a better sense of the above data, we will generate a mosaic plot in order to represent this information visually:
+
+
+```{r}
+rownames(ethnicity_tbl) = c("Mex Amer", "Oth Hisp", "NH Wht",
+                            "NH Blk", "NH Asn", "Other")
+mosaicplot(ethnicity_tbl, shade=TRUE, main = "BMI Category vs Ethnicity",
+               xlab = "Ethnicity", ylab = "BMI Weight Category",las = 1)
+```
+
+
+The mosaic plot condenses a considerable amount of information into a single plot. We can see the relative proportions of individuals in each category by ethnicity as well as the magnitude of the Pearson residuals through the colors (as specified in the legend). In the context of this sample, it appears that the Mexican American and Other Hispanic groups have a lower proportion of individuals in the healthy category while Non-Hispanic Asians have a lower proportion of obese. Conversely, the Mexican American and Non-Hispanic Black groups have a greater proportion of obese individuals while Non-Hispanic Asians have a greater proportion of healthy individuals.
+
+
+If we are to draw conclusions on the underlying population from the NHANES sample data, we would infer that the proportion of individuals in each of the four BMI categories is different across the six ethnic groups of the study. Examining the contributions of each group via the observed and expected values and the resulting residuals indicates that populations disproportionately affected by obesity are the Mexican American and Non-Hispanic Black ethnic groups. In regards to the less severe overweight category we see that the Mexican American, Other Hispanic, and Other (Multi-Racial) ethnicity are disproportionately affected. 
+
+This result would indicate that further research may be necessary in order to determine the underlying factors which put these populations at greater risk. Certain factors such as income, education levels, access to social services and others may be driving these disparities. By better understanding the underlying causes that contribute to greater proportions of overweight and obese individuals, governments may better address the root causes and thus improve the overall health of the population and reduce the strain on medical resources.
 
 
 Ethnicity                 | Underweight  | Healthy | Overweight | Obese |
