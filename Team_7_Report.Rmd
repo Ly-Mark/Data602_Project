@@ -1,0 +1,130 @@
+---
+title: "Data602_Team7"
+author: "Mark Ly"
+date: "12/10/2021"
+output: 
+  pdf_document: default
+  latex_engine: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# **TITLE** 
+
+<br/>
+
+## **Purpose and Motivation for the project**
+<br/>
+
+
+
+
+## **Data Collection**
+<br/><br/>
+
+### **Datasets** 
+NBA data was obtained from the website basketball-reference.com. This website contains an abundance of basketball data regarding players and teams for any basketball season. Basketball-Reference.com converts its tables into a comma separated values (CSV) format that we can easily transfer to excel and export. We will be using data from the most recent NBA season (2020-2021) to conduct our analysis. The tables we will be using are the Total Stats, which gives us statistics related to the games played per team, the Advanced Stats, which gives us more information that might not be directly recorded, such as pace of the game, and the conference standings, which gives us wins,losses and win percentages. Basketball-Reference.com is a website that is owned and operated by Sports Reference LLC. We will be adhering to the Terms and Conditions to be able to use this data set and referencing them in our final report.
+
+
+After obtaining the appropriate data set, we can we can load the data into R and clean up and merge the data into one complete tidy data set for analysis. 
+
+We will be using the teams name as a unique identifier in order to join different data sets together. However, the team names are not the same for each data set so we will have to rename the team names so they are standardized across all data sets. 
+<br/><br/>
+
+### **Data Wrangling**
+<br/><br/>
+#### Packages
+<br/><br/>
+For this project, we will make use of the following packages. 
+dplyr, MASS, ggplot, tidyverse, colorBrewer, visdat
+```{r}
+# packages <- c("dplyr",'MASS','ggplot2','tidyverse','visdat')
+# 
+# # initalizing all ;
+# lapply(packages,library,character.only=TRUE)
+```
+
+<br/><br/><br/>
+
+
+#### **Data cleaning**
+<br/><br/>
+
+After reading the CSV files into R and taking a look at the first few columns, we noticed that there are some columns names that are confusing or have some unknown characters. We will need to drop and rename the column names so they make sense to us when we are doing are analysis. The *Select* function from the dplyr package allows us to do this with by piping in our data set and calling the function. After dropping the rank column, end up with 24 parameters for both the advanced and total stats and 14 parameters for the conference standing. 
+
+
+```{r}
+library(dplyr)
+# reading files into dataframes 
+advStats <- read.csv("D:/UofC2021/DATA602/Project/advstats2021.csv")
+totStats <- read.csv("D:/UofC2021/DATA602/Project/totalstats2021.csv")
+winPer <- read.csv("D:/UofC2021/DATA602/Project/winpercent2021.csv")
+teamSal <- read.csv("D:/UofC2021/DATA602/Project/teamSalary.csv")
+
+head(advStats)
+
+# removing the first rank column in each data set
+advStats <- advStats %>% dplyr::select(-1) # 30 rows, 24 parameters
+totStats <- totStats %>% dplyr::select(-1) # 30 rows, 24 parameters
+winPer <- winPer %>% dplyr::select(-1) # 30 rows, 14 parameters
+
+head(advStats)
+
+```
+The team salary data set contains team salary information from the years of 1990 - 2021. For this project we will only want team salary data from the 2021 season. We will need to filter out our data by $Year == 2021$. We can do this easily with the filter function in dplyr. Next, we need to clean up the columns by removing rank and also the commas in the two salary columns. 
+
+```{r}
+# filtering the data to get only teams from 2021, dropping the first column in the data set 
+teamSal2021 <- teamSal %>% filter(Year==2021) %>% dplyr::select(-1)
+
+# removing the commas in the data, 
+teamSal2021[2:3] <- as.numeric(gsub(",","",c(teamSal2021$salary,teamSal2021$salary.Inflation.))) # 30 rows, 4 parameters
+head(teamSal2021)
+
+# full team names to place the current names to match the other data sets.
+teamNames = c("Golden State Warriors","Brooklyn Nets",'Philadelphia 76ers',"Los Angeles Clippers","Los Angeles Lakers" ,"Utah Jazz" ,"Milwaukee Bucks","Miami Heat",
+              "New Orleans Pelicans","Boston Celtics","Memphis Grizzlies","Portland Trail Blazers","Houston Rockets","Washington Wizards",'Minnesota Timberwolves',
+              'Indiana Pacers', 'Denver Nuggets','Cleveland Cavaliers','San Antonio Spurs','Toronto Raptors','Chicago Bulls','Phoenix Suns','Dallas Mavericks',
+              'Orlando Magic','Atlanta Hawks','Detroit Pistons','Charlotte Hornets','Sacramento Kings','New York Knicks','Oklahoma City Thunder')
+
+# replacing the team name column with our new name column
+teamSal2021["team"] <- teamNames
+teamSal2021 <-rename(teamSal2021, Team = team)
+teamSal2021
+```
+
+Now that unique identifiers have the same name, we can join all the tables together, and then clean up the columns we don't need. To do this we will use the left_join function in dplyr. We will again use the forward pipe to shorten our code. 
+
+```{r}
+# joining 
+nba2021 <- winPer %>% left_join(totStats, by = "Team") %>%
+    left_join(advStats, by ="Team")%>%
+    left_join(teamSal2021, by ="Team")
+head(nba2021) # 30 teams, 63 parameters 
+```
+After joining the data, we want to check if there are any missing pieces of data. To this we can use *is.null()* which gets for NaN values in our dataframe. To see this visually, we can use *vis_miss* command from the *visdat* package. If there are any missing pieces of data, it will give us the percentage of missing values based on the columns. 
+```{r}
+library(visdat)
+vis_miss(nba2021)
+```
+Now that we have a data set that does not have any missing values, we will now choose which parameters to keep in our final model. At this point we are not choosing parameters based on any statistically significance. We will be choosing parameters that might impact our model based on our discussion of what variables might contribute to increase the number of wins a NBA team can get over a season. 
+
+
+
+## **Statistical Analysis**
+
+
+
+
+## **Conclusion**
+
+
+
+
+## **References**
+
+
+
+
