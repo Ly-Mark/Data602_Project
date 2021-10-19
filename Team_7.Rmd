@@ -1,7 +1,6 @@
 ---
 title: "Team_7"
-author: "Mark Ly"
-date: "12/10/2021"
+author: "Dennis Felson, Eric Lauper, Mark Ly, Tejendra Naga Pavan Gottumukkala"
 output: pdf_document
 ---
 
@@ -15,14 +14,17 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## **Purpose and Motivation for the project**
 <br/>
+In this report we will investigate the weight status as measured by the body mass index (BMI) for different populations within the United States of America (USA). Specifically, we would like to examine the proportions of overweight and obese individuals across different ethnic, gender, and age groups. The motivation behind this is to understand if being overweight or obese is linked to the ethnic background, gender, or age of an individual. This would allow programs that attempt to address these health concerns to better target groups most adversely impacted by overweight and obesity. In order to examine these issues, we will be utilizing data gathered from the National Health and Nutrition Examination Survey (NHANES) which is a program under the National Center for Health Statistics (part of the Centers for Disease Control and Prevention or CDC). Further discussion of the underlying data and wrangling procedure is provided in the Data Sets section.
 
+The number of individuals impacted by overweight and obesity is a continued cause for concern as it directly impacts the quality of life and ultimately leads to other health conditions which come with great cost in terms of both individual health and healthcare expenditure. A better understanding of the individuals who are impacted the most by overweight and obesity may assist in appropriate programs to combat these problems with the ultimate goal of improving individual health and reducing the burden on the healthcare system.
 
+In order to evaluate these issues, we will employ different statistical inference methods. A hypothesis test will be conducted comparing the mean BMI of males and females for individuals of different age groups. This will identify if there is an appreciable difference in the average BMI of males and females of the different age ranges; conducting these tests for different age groups reflects that fact that BMI does vary with age. In order to examine whether there is a difference in the proportion of individuals in the different BMI categories across ethnicity, we will utilize a chi-squared test of homogeneity. In conducting these statistical inference procedures, we would ultimately like to understand how BMI varies in different groups across the USA and reflect on potential opportunities for more detailed study. 
 
 
 ## **Data Collection**
 <br/><br/>
 
-### **Datasets** 
+### **Dataset** 
 
 The data for this project was obtained from the National Health and Nutrition Examination Survey (NHANES) for years 2015-2016 and 2017-2018. The NHANES program surveys are done to determine the health of the nation by taking a national representative sample of about 5000 persons each year. This survey is an ongoing survey that shows the distribution of health issues within the U.S and allows health planners to see what health problems are affecting the population over time. However, NHANES does over sample a few groups, persons 60 and older, African Americans, and Hispanics. NHANES is a two part survey where there is a questionnaire part and an examination part. We will be making use of both parts for our project. We will be using 2 cycles, 2015 to 2016 and the 2017 to 2018 cycles. In the 2015 to 2016 cycle, we have about 15000 respondents from the ages of <1 year to 80+. 
 
@@ -32,6 +34,8 @@ We will also make use of the demographic data from the questionnaire, to get gen
 ### **Data Wrangling**
 
 #### **Base Data set**
+
+
 To get the data into a usable format for analysis, we will need to perform multiple data wrangling steps as well as making subsets of our data in order to answer our motivational questions. 
 
 1. Import the SAS export files using *SASxport*
@@ -81,11 +85,13 @@ bmi15to16 <- dplyr::select(bmi15to16,"SEQN","BMDSTATS",'BMXWT','BMXHT','BMXBMI',
 bmi17to18 <- dplyr::select(bmi17to18,"SEQN","BMDSTATS",'BMXWT','BMXHT','BMXBMI','BMXLEG',
                            'BMXARML','BMXARMC','BMXWAIST')
 
+
 # selecting variables from the Demographic data set for both cycles
 demo15to16 <- dplyr::select(demo15to16,"SEQN",'RIAGENDR','RIDRETH3','RIDAGEYR',
                             'DMDCITZN','DMDHHSIZ')
 demo17to18 <- dplyr::select(demo17to18,"SEQN",'RIAGENDR','RIDRETH3','RIDAGEYR',
                             'DMDCITZN','DMDHHSIZ')
+
 
 # merging both demographic and BMI data using the "SEQN" unique identifier 
 nhanes15to16 <- demo15to16 %>% left_join(bmi15to16, by="SEQN")
@@ -100,10 +106,11 @@ sortBMI <- nhanesBMI %>% filter(RIDAGEYR >= 20 & BMDSTATS ==1) #9757 rows
 
 vis_miss(sortBMI) # checking for missing after setting conditions
 
-head(sortBMI) # displaying data set 
+head(sortBMI)# displaying data set 
 ```
 
 #### **Sorting by Ethnicity**
+
 
 One of our questions we are investigating is the proportions of overweight and obese individuals across different ethnic groups. We will need to sub set our main data set by ethnic groups that have been defined in the NHANES data set.
 
@@ -112,7 +119,7 @@ One of our questions we are investigating is the proportions of overweight and o
         + 1 = Mexican American (1488 individuals)
         + 2 = Other Hispanic (1113 individuals)
         + 3 = Non-Hispanic White (3299 individuals)
-        + 4 = Non-Hispanic Black (1286 individuals)
+        + 4 = Non-Hispanic Black (2158 individuals)
         + 5 = Non-Hispanic Asian (1286 individuals)
         + 6 = Other Race (Multi-Racial) (413 individuals)
         
@@ -122,7 +129,7 @@ One of our questions we are investigating is the proportions of overweight and o
     + $25$ to $29.9$ = Overweight
     + $\geq30$ Obese
 
-3. We to get the count, mean and standard error for each of our BMI categories for each of our ethnicities. To accomplish this, we will create a function that takes advantage of *dplyr*'s forward pipe (*%>%*), *group_by*, and *summarize* commands
+3. We to get the count, mean and standard error for each of our BMI categories for each of our ethnicity. To accomplish this, we will create a function that takes advantage of *dplyr*'s forward pipe (*%>%*), *group_by*, and *summarize* commands
     + We first need to select which data set we want to use
     + Then we will use *group_by* command to group the individuals in our subset by the BMI categories that we set previously
     + We will use the *summarize* to perform operations on our grouped data
@@ -192,6 +199,7 @@ mexStat
 
 #### **Sorting by Gender**
 
+
 The other motivational question we are looking to answer wants to examine the differences between males and females. We will need to create another sub set of our main data base in order to do so. 
 
 1. First we need to sub set our data based on gender using the *filter* function in *dplyr*. From the demographic code book, gender is labeled as RIAGENDR
@@ -260,7 +268,6 @@ femaleStatTotal <- femaleAgeBMI %>% summarize(
     se = sd(BMXBMI)/sqrt(n())
 )
 
-maleStat
 ```
 Now that we have gathered all our data and calculated the relevant statistics, we can begin our analysis of BMI 
 
@@ -269,35 +276,253 @@ Now that we have gathered all our data and calculated the relevant statistics, w
 
 ### **Hypothesis test**
 
+We will start by doing a hypothesis test on whether there is any statically significant difference in the BMI's of males and females across all age groups that are $\geq20$ years old. In our sample, we have a total of 4782 males and 4975 females across all age groups 
+
 ```{r}
-maleStat
-femaleStat
-maleStatTotal
-femaleStatTotal
+SampleMeanMales=maleStatTotal$mean  
+SampleMeanFemales=femaleStatTotal$mean
+diff.BMIs=SampleMeanMales-SampleMeanFemales
+
+cat("Total Sample Mean for Male BMI:", SampleMeanMales, 
+    "Total Sample Mean for Female BMI:", SampleMeanFemales, 
+    "Mean difference between Males and Females:",  abs(diff.BMIs), sep="\n")
 ```
+We can see the sample mean BMI of male across all age groups is 29.0404 $kg/m^2$, whereas the sample mean BMI of Female across all age groups is 29.8699 $kg/m^2$. From our data set, the mean difference in BMI between Males and Females is 0.8295 $kg/m^2$ for who have a age $\geq20$. To check whether the difference is significant or not we do a two sided test at $\alpha=0.05$.
+
+$H_o : \mu_{maleBMI} = \mu_{femaleBMI}$
+
+$H_a : \mu_{maleBMI} \neq \mu_{femaleBMI}$
+
+
+Null hypothesis states that there is no difference between population mean BMI's of males and females.
+
+Alternative hypothesis states there is a difference between population mean BMI's of males and females.
+
+## Conditions for Hypothesis Test: Difference Between Means
+
+1. Meets the Independence condition as the two samples of Male and Female are independent of each other. They are less than 10% of their respective gender population.
+
+2. The two populations are normally distributed 
+
+3. The two populations have the same variance. 
+
+```{r}
+Maleage.BMIsample=maleAgeBMI %>% select(BMXBMI) #selecting BMI's of males 
+Femaleage.BMIsample=femaleAgeBMI  %>% select(BMXBMI) #selecting BMi's of females
+
+maleFemaleAll <- t.test(x=Maleage.BMIsample, y=Femaleage.BMIsample,alternative = "two.sided") 
+```
+
+### **P-value approach**
+
+From the test results we can see that with a low P-value of $1.979e-09$, which is significantly less than $\alpha=0.05$, we can strongly reject the null hypothesis in favor of alternate hypothesis $H_a : \mu_{maleBMI} \neq \mu_{femaleBMI}$, which states that there is a difference between mean BMI's of males and females. 
+
+
+### **Critical value approach**
+```{r}
+cat("tstatistic = ", maleFemaleAll$statistic)
+```
+Our critical values from a two sided t-test for is (-1.9602, 1.9602)
+From our t-test, our test statistic value was $t = -6.0054$. Since our test statistics does not appear within our range of critical values, we once again reject our null hypothesis, $H_o : \mu_{maleBMI} = \mu_{femaleBMI}$, which means that their is a difference between mean BMI's of males and females.
+
+### **Confidence interval**
+```{r}
+print("95% confidence interval = (0.5588 , 1.1003)")
+```
+Our 95% confidence interval is (0.5588, 1.1003) which means that we are 95% confident that the difference in mean BMI between men and women is between 0.5588 $kg/m^2$ and 1.1003 $kg/m^2$
+
+Next, we would like to examine if age plays a factor in the difference between male and female BMI and if the difference is consistent across all age groups or if a particular age group is influencing this result. We will be examining the age groups of 20 to 39, 40 to 59 and 60+ and preforming the same difference of means hypothesis testing for each age range. 
+
+### **Age group 20 - 39, 40 - 59, 60+**
+
+
+$H_o:  \mu_{maleBMI} = \mu_{femaleBMI}$
+
+$H_o:  \mu_{maleBMI} \neq \mu_{femaleBMI}$
+
+For all three age ranges, we are going to have the same null and alternative hypothesis;
+
+Null hypothesis states that there is no difference between population mean BMI's of males and females 
+
+Alternative hypothesis states there is a difference between population mean BMI's of males and females. 
+
+We will also be testing each of the age ranges using a significance level of $\alpha=0.05$.
+Again, we will will assume that our data set for each age range has the following assumptions.
+
+1. Meets the Independence condition as the two samples of Male and Female are independent of each other. They are less than 10% of their respective gender population.
+
+2. The two populations are normally distributed 
+
+3. The two populations have the same variance. 
+
+```{r}
+
+##First we Isolate the data into the desired age-ranges 
+male2039 <- maleAgeBMI %>% 
+    filter(ageRange=="20-39")
+
+Female2039 <- femaleAgeBMI %>% 
+    filter(ageRange=="20-39")
+
+male4059 <- maleAgeBMI %>% 
+    filter(ageRange=="40-59")
+
+Female4059 <- femaleAgeBMI %>% 
+    filter(ageRange=="40-59")
+
+male6080 <- maleAgeBMI %>% 
+    filter(ageRange=="60+")
+ 
+Female6080 <- femaleAgeBMI %>% 
+    filter(ageRange=="60+") 
+
+#Then we conduct the hypothesis test for the desired age-ranges
+
+# First are males and females ages 20-39
+age2039 <- t.test(male2039$BMXBMI,Female2039$BMXBMI, alternative = "two.sided")
+age2039
+# Second test, Ages 40-59
+age4059 <- t.test(male4059$BMXBMI,Female4059$BMXBMI, alternative = "two.sided")
+age4059
+# Third test, ages 60+
+age60 <- t.test(male6080$BMXBMI,Female6080$BMXBMI, alternative = "two.sided")
+age60
+```
+
+```{r}
+pvalue = c(round(age2039$p.value,4), age4059$p.value, age60$p.value)
+tvalue = c(round(age2039$statistic,4), round(age4059$statistic,4), round(age60$statistic,4))
+ageconfint = c("(-0.9723, 0.07108)","(-1.4977, -0.5475)","(-1.3473, -0.5376)")
+rownames=c("20-39",'40-59','60+')
+
+ageSummary <- data.frame(pvalue,tvalue,ageconfint,row.names = rownames)
+print(ageSummary)
+```
+##  **Summary of Hypothesis tests of male and female BMI over multiple age ranges**
+
+Age Range  |      P-value       |   t statistic |         95% CI      |
+-----------|--------------------|---------------|---------------------|
+20 to 39   |   0.09045          |   -1.6936     |  (-0.9723, 0.07108) | 
+40 to 59   |   $2.511e^{-5}$    |   -4.2200     |  (-1.4977, -0.5475) | 
+60+        |   $5.205e^{-6}$    |   -4.5640     |  (-1.3473, -0.5376) |
+
+### **P-value approach**
+
+For the age ranges of 40 to 59 and 60+, we see that the P-value is low in both cases, $2.511e^{-5}$ and $5.205e^{-6}$, respectively. We would reject our null hypothesis, $H_o:  \mu_{maleBMI} = \mu_{femaleBMI}$ at the $\alpha=0.05$ level. This matches our initial exploration that looked at BMI's of males and females over all age groups and that there is a difference between mean BMI's.
+
+
+However, at the 20 to 39 age ranges, we have a P-value of 0.09045, which is above our significance level of $\alpha=0.05$. This means we fail to reject the null hypothesis, $H_o:  \mu_{maleBMI} = \mu_{femaleBMI}$. In other words, this means that our test results are not strong enough to say that male and female mean BMI's are different at this age range. 
+
+
+### **Critical Value approach** 
+
+Since we are still doing a t-test and the degrees of freedom are very large ($n\geq 1000$) for all age ranges, the critical value range for all 3 tests will be between (-1.962 and 1.962)
+
+The persons in the 40 to 59 range and 60+ range gave us a t-statistic of -4.2200 and -4.5640, respectively. Since both these values are outside of our range, we can reject our null hypothesis at the $\alpha=0.05$ level. This matches with our P-value conclusion above. 
+
+For the 20 to 39 range, we see that our test statistic is -1.6936 which falls inside of our range of (-1.962 and 1.962). This means that we fall to reject our null hypothesis at the 5% level and our tests results are not strong enough to say that the mean BMI's between males and females are different at this range. Again, this matches our P-value conclusion that we determined previously. 
+
+### **Confidence Intervals**
+
+Starting with the 40 to 59 and 60+ age ranges, we can say that we are 95% confident that the mean BMI difference between mean and women will be between 0.5475 $kg/m^2$ and 1.4977 $kg/m^2$ and 0.5376 $kg/m^2$ and 1.3473 $kg/m^2$, respectively. 
+
+For those persons aged 20 to 39, we are 95% confident that the true mean difference in BMI between men and women is between -0.9723 $kg/m^2$ to 0.07108 $kg/m^2$. Since this interval contains the null value (0), we also conclude that there is no statistically significant difference between the mean BMI's of men and women.
 
 
 ### **Test of homogeneity**
 
+In order to examine whether the proportion of individuals in each BMI category are consistent across different ethnic backgrounds, we will conduct a test of homogeneity using a chi-squared test. The populations under analysis are the representative groups from which the sample participants were selected; individuals of Mexican American, other Hispanic, Non-Hispanic White, Non-Hispanic Black, Non-Hispanic Asian, and other(multi-racial) ethnicity. 
 
-Ethnicity                 | Underweight  | Healthy | Overweight | Obese |
---------------------------|-------|------| --------|----------- |-------|
-Mexican American          | 0.1   | 0.0  |   -2    |     4      |  0.4  | 
-Other Hispanic            | 0.2   | 0.2  |   -1    |     1      |  0.2  | 
-Non-Hispanic White        | 0.4   | 0.8  |    0    |     0      |  0.2  | 
-Non-Hispanic Black        | 0.2   | 0.6  |    1    |     1      |  0.2  | 
-Non-Hispanic Asian        | 0.1   | 0.4  |    2    |     4      |  0.2  | 
-Other Race (Multi Racial) | 11    | 11   |    1    |     5      |  0.2  | 
+BMI is categorized into the following categories: underweight, healthy, overweight, and obese. These categorizations are based on BMI values of less than 18.5 $kg/m^2$, 18.5 - 24.9 $kg/m^2$, 25 - 29.9 $kg/m^2$ and 30 $kg/m^2$ and over respectively. We hope to examine whether the proportion of individuals in each category are consistent across different ethnic groups, and if not, this may provide grounds for further research into what is driving these differences as well as targeting programs appropriately to assist those populations struggling with overweight and obesity.	
+
+
+```{r}
+#creating a data frame consisting of the individuals in each BMI category by ethnicity
+ethnicity_df = rbind(ethMex[,c(3,15)],ethHisp[,c(3,15)])
+ethnicity_df = rbind(ethnicity_df,ethNW[,c(3,15)])
+ethnicity_df = rbind(ethnicity_df,ethNB[,c(3,15)])
+ethnicity_df = rbind(ethnicity_df,ethNA[,c(3,15)])
+ethnicity_df = rbind(ethnicity_df,ethMW[,c(3,15)])
+
+#convertinf above data frame into table required to run the chi-squared test
+ethnicity_tbl = table(ethnicity_df$RIDRETH3,ethnicity_df$bmiRange)
+rownames(ethnicity_tbl) = c("Mexican American", "Other Hispanic", "Non-Hispanic White",
+                            "Non-Hispanic Black", "Non-Hispanic Asian", "Other Race (Multi Racial)")
+```
+
+Ethnicity                 | Healthy  |   Obese | Overweight | Underweight |
+--------------------------|----------|---------|------------|-------------|
+Mexican American          |   209    |   735   |    538     |      6      | 
+Other Hispanic            |   207    |   474   |    421     |      11     | 
+Non-Hispanic White        |   858    |   1343  |    1041    |      57     | 
+Non-Hispanic Black        |   481    |   1035  |    610     |      32     | 
+Non-Hispanic Asian        |   632    |   171   |    451     |      32     | 
+Other Race (Multi Racial) |   102    |   202   |    103     |      6      | 
+
+
+The above table indicates the number of individuals who fall into each BMI category, grouped by ethnicity. This is the initial contingency table from which the chi-squared test of homogeneity will be conducted. As we are examining the samples in order to see whether there is a significant difference in the number of people in each BMI category across the six ethnic groups we will setup the null and alternative hypothesis as follows:
+
+$H_o:$ The proportion of individuals in each of the four BMI categories is the same across the six ethnic groups.
+
+$H_a:$ The proportion of individuals in each of the four BMI categories is not the same across the six ethnic groups.
+
+
+We have elected to use a 5% level of significance in conducting this test.
+
+```{r}
+#calculations to manually setup chi-square test are based on slide 8 and 9 of Dr. Chen's 
+#Week 4 - II lecture notes presented October 5, 2021
+expected = as.array(margin.table(ethnicity_tbl,1)) %*% t(as.array(margin.table(ethnicity_tbl,2)))/
+    margin.table(ethnicity_tbl)
+cellcontributions = (as.array(ethnicity_tbl)-expected)^2/expected
+chi_square = round(sum(cellcontributions),4)
+pval = round(1- pchisq(chi_square,4),4)
+cat("Chisquare =", chi_square, ", ","P-value =", pval, "\n")
+#using built-in chi-square function
+chisq.test(ethnicity_tbl)
+
+
+```
+
+
+The above results show both the manual calculation and using the built-in chisq.test() function yield a test statistic of `r chi_square` and P-value of `r pval`. Since the P-value is extremely small and far less than the 5% level of significance, we strongly reject the null hypothesis that proportion of individuals in each of the four BMI categories is the same across the six ethnic groups.
+
+In order to gain further insight into this result, we will examine the expected values based on the contingency table values along with the Pearson residuals ($\frac{observed-expected}{\sqrt{expected}}$).
+
+
+```{r}
+chisq.test(ethnicity_tbl)$expected
+```
+
+
+```{r}
+chisq.test(ethnicity_tbl)$residuals
+```
+
+
+The table above demonstrates that the largest residuals come from Non-Hispanic Asians in both the healthy and obese categories. As the value in the healthy weight category is large and positive this indicates that the Non-Hispanic Asian population has a greater proportion of individuals in the healthy category and the large negative under obesity indicates a lower proportion of their population falls in the obese category as compared with the expected values of the contingency table. The next largest residuals are from the Mexican American group, in this case it appears that a their population has a greater proportion of individuals in the obese category and a smaller proportion in the healthy category. In order to get a better sense of the above data, we will generate a mosaic plot in order to represent this information visually:
+
+
+```{r}
+rownames(ethnicity_tbl) = c("Mex Amer", "Oth Hisp", "NH Wht",
+                            "NH Blk", "NH Asn", "Other")
+mosaicplot(ethnicity_tbl, shade=TRUE, main = "BMI Category vs Ethnicity",
+               xlab = "Ethnicity", ylab = "BMI Weight Category",las = 1)
+```
+
+
+The mosaic plot condenses a considerable amount of information into a single plot. We can see the relative proportions of individuals in each category by ethnicity as well as the magnitude of the Pearson residuals through the colors (as specified in the legend). In the context of this sample, it appears that the Mexican American and Other Hispanic groups have a lower proportion of individuals in the healthy category while Non-Hispanic Asians have a lower proportion of obese. Conversely, the Mexican American and Non-Hispanic Black groups have a greater proportion of obese individuals while Non-Hispanic Asians have a greater proportion of healthy individuals.
+
+
+If we are to draw conclusions on the underlying population from the NHANES sample data, we would infer that the proportion of individuals in each of the four BMI categories is different across the six ethnic groups of the study. Examining the contributions of each group via the observed and expected values and the resulting residuals indicates that populations disproportionately affected by obesity are the Mexican American and Non-Hispanic Black ethnic groups. In regards to the less severe overweight category we see that the Mexican American, Other Hispanic, and Other (Multi-Racial) ethnicity are disproportionately affected. 
+
+This result would indicate that further research may be necessary in order to determine the underlying factors which put these populations at greater risk. Certain factors such as income, education levels, access to social services and others may be driving these disparities (Zilanawala et.al, 2015). By better understanding the underlying causes that contribute to greater proportions of overweight and obese individuals, governments may better address the root causes and thus improve the overall health of the population and reduce the strain on medical resources.
 
 
 
 ```{r}
-mexStat
-hispStat
-nwStat
-nbStat
-naStat
-mwStat
+
+
 ```
 
 ## **Conclusion**
@@ -308,5 +533,5 @@ mwStat
 ## **References**
 
 
-
+Zilanawala, A. et al. (2014) ‘Race/ethnic disparities in early childhood BMI, obesity and overweight in the United Kingdom and United States’, International Journal of Obesity 2015 39:3. Nature Publishing Group, 39(3), pp. 520–529. doi: 10.1038/ijo.2014.171.
 
